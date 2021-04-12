@@ -21,12 +21,27 @@ class CitySelector extends React.Component {
 
   selectOption(selectedOption) {
     let requestBody = {}
-    requestBody[selectedOption.geonameid] = true
+    let isAlreadyChecked = this.state.preferredCityIds.some(cityId => cityId === selectedOption.geonameid)
+    requestBody[selectedOption.geonameid] = !isAlreadyChecked
     fetch(`${apiPath}/preferences/cities`, {
       method: 'PATCH',
       headers: {"Content-Type": "application/json; charset=utf-8"},
       body: JSON.stringify(requestBody)
     }).then(response => {
+      let updatedCityIds = [...this.state.preferredCityIds]
+      let updatedCities = [...this.state.preferredCities]
+      if (isAlreadyChecked) {
+        updatedCityIds.splice(updatedCityIds.indexOf(selectedOption.geonameid),1)
+        updatedCities.splice(updatedCities.indexOf(selectedOption),1)
+      } else {
+        updatedCityIds.push(selectedOption.geonameid)
+        updatedCities.push(selectedOption)
+      }
+      this.setState({
+        preferredCityIds: updatedCityIds,
+        preferredCities: updatedCities
+      })
+      // Make sure list and db are in sync
       this.getPreferredCityIds()
     })
   }
@@ -75,12 +90,18 @@ class CitySelector extends React.Component {
     }
   }
 
-  renderPreferredCities() {
+  renderPreferredCityIds() {
     // I would like to use the getCity method for each of these
     // however, I was unable to get it working in the time I gave myself.
     // I can speak to this in the review, for now it just displays the ids.
     return this.state.preferredCityIds.map((option, index) => {
-      return <div key={index}>{option}</div>
+      return <div key={index}>Id: {option}</div>
+    })
+  }
+
+  renderPreferredCities() {
+    return this.state.preferredCities.map((city, index) => {
+      return <div key={index}>{`${city.name}, ${city.subcountry} - ${city.country}`}</div>
     })
   }
 
@@ -106,7 +127,13 @@ class CitySelector extends React.Component {
   render() {
     return (
       <div className="dropdown-container">
-        <div>{this.renderPreferredCities()}</div>
+        <div>
+          {
+            this.state.preferredCities.length
+            ? this.renderPreferredCities()
+            : this.renderPreferredCityIds()
+          }
+        </div>
         <input
             type="text"
             className="dropdown-input"
