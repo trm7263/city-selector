@@ -1,5 +1,5 @@
 {
-  "name": "state-selector",
+  "name": "city-selector",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
